@@ -1,104 +1,426 @@
 const express = require('express');
-
-const sqlite3 = require('sqlite3').verbose();
-
+const { Pool } = require('pg'); 
 const app = express();
-
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 // 1. MIDDLEWARE SETUP
-
 app.use(express.urlencoded({ extended: true })); 
-
 app.use(express.static('public')); 
 
-// 2. DATABASE SETUP
-
-const db = new sqlite3.Database('./clinic.db', (err) => {
-
-    if (err) console.error(err.message);
-
-    console.log('Connected to the SQLite database.');
-
+// 2. DATABASE SETUP (PostgreSQL)
+const pool = new Pool({
+    // Use environment variable 'DATABASE_URL' which you will set in Render
+    connectionString: process.env.DATABASE_URL || "postgresql://database1_2p36_user:EPEAofL6fY1hmYfEDEkmGPvALvJMVN2T@dpg-d54ceejuibrs738d0c50-a/database1_2p36",
+    ssl: {
+        rejectUnauthorized: false 
+    }
 });
 
-db.serialize(() => {
+async function initDB() {
+    try {
+        await pool.query(`CREATE TABLE IF NOT EXISTS doctor (
+            id SERIAL PRIMARY KEY,
+            name TEXT,
+            qualification TEXT,
+            image_url TEXT,
+            phone TEXT
+        )`);
 
-    // Create Doctor Table
+        await pool.query(`CREATE TABLE IF NOT EXISTS feedbacks (
+            id SERIAL PRIMARY KEY,
+            patient_name TEXT,
+            mobile TEXT,
+            details TEXT,
+            rating INTEGER
+        )`);
 
-    db.run(`CREATE TABLE IF NOT EXISTS doctor (
-
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-
-        name TEXT,
-
-        qualification TEXT,
-
-        image_url TEXT,
-
-        phone TEXT
-
-    )`);
-
-    // Create Feedback Table
-
-    db.run(`CREATE TABLE IF NOT EXISTS feedbacks (
-
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-
-        patient_name TEXT,
-
-        mobile TEXT,
-
-        details TEXT,
-
-        rating INTEGER
-
-    )`);
-
-    // Insert Dr. Meghana P PT (Seed Data)
-
-    db.get("SELECT * FROM doctor WHERE name = 'Dr. Meghana P PT'", (err, row) => {
-
-        if (!row) {
-
-            const stmt = db.prepare("INSERT INTO doctor (name, qualification, image_url, phone) VALUES (?, ?, ?, ?)");
-
-            stmt.run('Dr. Meghana P PT', 'Bachelor of Physiotherapy', '/doctor.jpg', '9019996573'); 
-
-            stmt.finalize();
-
+        const res = await pool.query("SELECT * FROM doctor WHERE name = $1", ['Dr. Meghana P PT']);
+        if (res.rows.length === 0) {
+            await pool.query(
+                "INSERT INTO doctor (name, qualification, image_url, phone) VALUES ($1, $2, $3, $4)",
+                ['Dr. Meghana P PT', 'Bachelor of Physiotherapy', '/doctor.jpg', '9019996573']
+            );
         }
+        console.log('Connected to Render PostgreSQL and initialized tables.');
+    } catch (err) {
+        console.error('Database Init Error:', err);
+    }
+}
+initDB();
 
-    });
 
-});
 
 // 3. ROUTES
+app.get('/', async (req, res) => {
+    try {
+        const doctorRes = await pool.query("SELECT * FROM doctor LIMIT 1");
+        const feedbacksRes = await pool.query("SELECT * from feedbacks ORDER BY id DESC");
+        const statsRes = await pool.query("SELECT AVG(rating) as avg_rating, COUNT(id) as count FROM feedbacks");
 
-app.get('/', (req, res) => {
+        const doctor = doctorRes.rows[0];
+        const feedbacks = feedbacksRes.rows;
+        const stats = statsRes.rows[0];
 
-    db.get("SELECT * FROM doctor LIMIT 1", (err, doctor) => {
+        stats.avg_rating = parseFloat(stats.avg_rating) || 0;
+        stats.count = parseInt(stats.count) || 0;
 
-        if (err) return res.send("Database error");
-
-        db.all("SELECT * FROM feedbacks ORDER BY id DESC", (err, feedbacks) => {
-
-            if (err) return res.send("Database error");
-
-            db.get("SELECT AVG(rating) as avg_rating, COUNT(id) as count FROM feedbacks", (err, stats) => {
-
-                if (err) return res.send("Database error");
-
-                res.send(renderHTML(doctor, feedbacks, stats));
-
-            });
-
-        });
-
-    });
-
+        res.send(renderHTML(doctor, feedbacks, stats));
+    } catch (err) {
+        console.error(err);
+        res.status(500).send("Database error occurred.");
+    }
 });
+
+app.post('/submit-feedback', async (req, res) => {
+    const { name, mobile, details, rating } = req.body;
+    try {
+        await pool.query(
+            "INSERT INTO feedbacks (patient_name, mobile, details, rating) VALUES ($1, $2, $3, $4)",
+            [name, mobile, details, rating]
+        );
+        res.redirect('/');
+    } catch (err) {
+        console.error(err);
+        res.status(500).send("Error saving feedback");
+    }
+});
+
+ // --- ADD THIS ROUTE FOR THE DOCTOR'S PROFILE PAGE ---
+app.get('/about-doctor', (req, res) => {
+    res.send(`
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Dr. Meghana P - Profile</title>
+        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+        <style>
+            body { font-family: 'Poppins', sans-serif; line-height: 1.6; color: #1f2937; max-width: 800px; margin: 40px auto; padding: 20px; background: #f3f6f9; }
+            .info-card { background: white; padding: 40px; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); text-align: center; }
+            .profile-large { width: 200px; height: 200px; border-radius: 50%; object-fit: cover; border: 5px solid #0066cc; margin-bottom: 20px; }
+            h1 { color: #0066cc; margin-bottom: 10px; }
+            .details-align { text-align: left; background: #f8fafc; padding: 25px; border-radius: 16px; margin-top: 20px; }
+            h2 { font-size: 1.2rem; color: #111827; margin-top: 20px; border-left: 4px solid #10b981; padding-left: 15px; }
+            p { margin: 10px 0; }
+            .home-btn { display: inline-block; margin-top: 30px; padding: 15px 30px; background: #0066cc; color: white; text-decoration: none; border-radius: 50px; font-weight: 700; transition: 0.3s; }
+            .home-btn:hover { background: #004c99; transform: translateY(-2px); }
+        </style>
+    </head>
+    <body>
+        <div class="info-card">
+            <img src="/doctor.jpg" alt="Dr. Meghana P" class="profile-large">
+            <h1>Dr. Meghana P</h1>
+            <p><strong>Bachelor of Physiotherapy</strong></p>
+            
+            <div class="details-align">
+                 
+                <h2>Experience</h2>
+                <p>Worked as a sports physio at <strong>Sai Sports Academy</strong></p>
+
+                <h2>Specialisation</h2>
+                <p>Restoring basic mobility, managing chronic pain (like back or neck pain), and rehabilitating patients after surgery or illness.</p>
+                
+                <h2>Sports Injury Expertise</h2>
+                <p>Treatment and prevention of sports-related injuries (e.g., ACL tears, tennis elbow, or hamstring strains).</p>
+
+                <h2>Languages</h2>
+                <p>English, Kannada, Telugu, Hindi</p>
+            </div>
+
+            <a href="/" class="home-btn">Back to Home Page</a>
+        </div>
+    </body>
+    </html>
+    `);
+});
+
+
+// --- ADD THIS NEW ROUTE FOR ULTRASOUND THERAPY ---
+app.get('/ultrasound', (req, res) => {
+    res.send(`
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Ultrasound Therapy - Treatment Goals</title>
+        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+        <style>
+            body { font-family: 'Poppins', sans-serif; line-height: 1.6; color: #1f2937; max-width: 800px; margin: 40px auto; padding: 20px; background: #f3f6f9; }
+            .info-card { background: white; padding: 40px; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+            h1 { color: #0066cc; margin-top: 0; font-size: 2.5rem; border-bottom: 3px solid #0066cc; display: inline-block; margin-bottom: 20px; }
+            h2 { color: #111827; margin-top: 30px; font-size: 1.4rem; border-left: 4px solid #10b981; padding-left: 15px; }
+            ul { padding-left: 20px; }
+            li { margin-bottom: 12px; }
+            .home-btn { display: inline-block; margin-top: 30px; padding: 15px 30px; background: #0066cc; color: white; text-decoration: none; border-radius: 50px; font-weight: 700; transition: 0.3s; }
+            .home-btn:hover { background: #004c99; transform: translateY(-2px); }
+        </style>
+    </head>
+    <body>
+        <div class="info-card">
+            <h1>Ultrasound Therapy</h1>
+            <p>The goals of this treatment shift as a patient moves from the initial injury toward full recovery.</p>
+            
+            <h2>1. Short-Term Goals (Immediate Response)</h2>
+            <ul>
+                <li><strong>Pain Modulation:</strong> Increasing pain threshold by stimulating the "gate control" mechanism.</li>
+                <li><strong>Inflammation Control:</strong> Using pulsed ultrasound to increase cell permeability and reduce swelling.</li>
+                <li><strong>Muscle Spasm Reduction:</strong> Gentle heating helps "reset" muscle spindles for immediate relaxation.</li>
+                <li><strong>Improved Local Circulation:</strong> Thermal effects widen blood vessels to bring oxygen and nutrients to the site.</li>
+            </ul>
+
+            <h2>2. Long-Term Goals (Tissue Repair)</h2>
+            <ul>
+                <li><strong>Tissue Regeneration:</strong> Stimulating fibroblasts to produce collagen for tendon and ligament repair.</li>
+                <li><strong>Scar Tissue Realignment:</strong> Making collagen fibers more "pliable" to massage them into functional alignment.</li>
+                <li><strong>Accelerated Bone Healing:</strong> Stimulating osteoblasts to speed up the union of fractures.</li>
+                <li><strong>Improved Extensibility:</strong> Increasing the "stretchiness" of joint capsules and tendons in chronic cases.</li>
+            </ul>
+
+            <a href="/" class="home-btn">Back to Home Page</a>
+        </div>
+    </body>
+    </html>
+    `);
+});
+
+// --- ADD THIS NEW ROUTE FOR TENS THERAPY ---
+app.get('/tens', (req, res) => {
+    res.send(`
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>TENS Therapy - Treatment Goals</title>
+        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+        <style>
+            body { font-family: 'Poppins', sans-serif; line-height: 1.6; color: #1f2937; max-width: 800px; margin: 40px auto; padding: 20px; background: #f3f6f9; }
+            .info-card { background: white; padding: 40px; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+            h1 { color: #0066cc; margin-top: 0; font-size: 2.5rem; border-bottom: 3px solid #0066cc; display: inline-block; margin-bottom: 20px; }
+            h2 { color: #111827; margin-top: 30px; font-size: 1.4rem; border-left: 4px solid #10b981; padding-left: 15px; }
+            ul { padding-left: 20px; }
+            li { margin-bottom: 12px; }
+            .home-btn { display: inline-block; margin-top: 30px; padding: 15px 30px; background: #0066cc; color: white; text-decoration: none; border-radius: 50px; font-weight: 700; transition: 0.3s; }
+            .home-btn:hover { background: #004c99; transform: translateY(-2px); }
+        </style>
+    </head>
+    <body>
+        <div class="info-card">
+            <h1>TENS Therapy</h1>
+            <p>TENS goals focus on neurological "distraction" in the short term and biochemical regulation in the long term.</p>
+            
+            <h2>1. Short-Term Goals (Immediate Management)</h2>
+            <ul>
+                <li><strong>Pain Signal Interruption:</strong> Stimulating large sensory nerve fibers to "close the gate" in the spinal cord, blocking pain signals to the brain.</li>
+                <li><strong>Acute Muscle Relaxation:</strong> Interrupting the "pain-spasm-pain" cycle through gentle tingling sensations.</li>
+                <li><strong>Functional Improvement:</strong> Lowering movement-evoked pain so patients can perform necessary stretches and exercises.</li>
+                <li><strong>Edema Reduction:</strong> Using low-frequency settings to create a "muscle pump" effect that moves fluid out of injured areas.</li>
+            </ul>
+
+            <h2>2. Long-Term Goals (Systemic Changes)</h2>
+            <ul>
+                <li><strong>Endogenous Opioid Release:</strong> Stimulating the brain to release natural painkillers like endorphins for long-lasting relief.</li>
+                <li><strong>Reduction of Central Sensitization:</strong> Retraining the nervous system to be less sensitive and dampening nerve hyperactivity.</li>
+                <li><strong>Decreased Drug Dependency:</strong> Providing a non-pharmacological alternative to reduce reliance on opioids or NSAIDs.</li>
+                <li><strong>Improved Micro-circulation:</strong> Influencing the nervous system to improve blood flow for long-term tissue health.</li>
+            </ul>
+
+            <a href="/" class="home-btn">Back to Home Page</a>
+        </div>
+    </body>
+    </html>
+    `);
+});
+
+
+// --- ADD THIS ROUTE FOR BACK PAIN HERE ---
+app.get('/back-pain', (req, res) => {
+    res.send(`
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Back Pain Details</title>
+        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+        <style>
+            body { font-family: 'Poppins', sans-serif; line-height: 1.6; color: #1f2937; max-width: 800px; margin: 40px auto; padding: 20px; background: #f3f6f9; }
+            .info-card { background: white; padding: 40px; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+            h1 { color: #0066cc; border-bottom: 3px solid #0066cc; display: inline-block; margin-bottom: 20px; }
+            h2 { color: #111827; margin-top: 30px; font-size: 1.4rem; border-left: 4px solid #10b981; padding-left: 15px; }
+            ul { padding-left: 20px; }
+            li { margin-bottom: 12px; }
+            .home-btn { display: inline-block; margin-top: 30px; padding: 15px 30px; background: #0066cc; color: white; text-decoration: none; border-radius: 50px; font-weight: 700; transition: 0.3s; }
+            .home-btn:hover { background: #004c99; transform: translateY(-2px); }
+        </style>
+    </head>
+    <body>
+        <div class="info-card">
+            <h1>Back Pain</h1>
+            <p>The goals are typically categorized into short-term relief and long-term functional recovery.</p>
+            <h2>Immediate & Short-Term Goals</h2>
+            <ul>
+                <li><strong>Pain Reduction:</strong> Using "passive" therapies (like heat/ice, manual therapy, or TENS) to lower pain levels so you can begin to move.</li>
+                <li><strong>Inflammation Control:</strong> Managing swelling and tissue irritation through guided rest and gentle movement.</li>
+                <li><strong>Restoring Basic Mobility:</strong> Improving the range of motion in the spine and hips so simple tasks become less painful.</li>
+                <li><strong>Nerve Decompression:</strong> Moving pain from the leg back toward the spine to relieve nerve pressure.</li>
+            </ul>
+            <h2>Long-Term & Functional Goals</h2>
+            <ul>
+                <li><strong>Core & Spinal Stabilization:</strong> Strengthening deep "stabilizer" muscles that act as a natural corset for your spine.</li>
+                <li><strong>Postural Re-education:</strong> Correcting habits that put repetitive stress on your back.</li>
+                <li><strong>Functional Independence:</strong> Returning to specific life activities like gardening or sports.</li>
+                <li><strong>Prevention of Recurrence:</strong> Education on home exercise programs (HEP).</li>
+            </ul>
+            <a href="/" class="home-btn">Back to Home Page</a>
+        </div>
+    </body>
+    </html>
+    `);
+});
+
+// --- ADD THIS NEW ROUTE FOR IFT THERAPY ---
+app.get('/ift', (req, res) => {
+    res.send(`
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>IFT Therapy - Treatment Goals</title>
+        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+        <style>
+            body { font-family: 'Poppins', sans-serif; line-height: 1.6; color: #1f2937; max-width: 800px; margin: 40px auto; padding: 20px; background: #f3f6f9; }
+            .info-card { background: white; padding: 40px; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+            h1 { color: #0066cc; margin-top: 0; font-size: 2.5rem; border-bottom: 3px solid #0066cc; display: inline-block; margin-bottom: 20px; }
+            h2 { color: #111827; margin-top: 30px; font-size: 1.4rem; border-left: 4px solid #10b981; padding-left: 15px; }
+            ul { padding-left: 20px; }
+            li { margin-bottom: 12px; }
+            .home-btn { display: inline-block; margin-top: 30px; padding: 15px 30px; background: #0066cc; color: white; text-decoration: none; border-radius: 50px; font-weight: 700; transition: 0.3s; }
+            .home-btn:hover { background: #004c99; transform: translateY(-2px); }
+        </style>
+    </head>
+    <body>
+        <div class="info-card">
+            <h1>IFT (Interferential Therapy)</h1>
+            <p>The goals of IFT transition from immediate "crisis management" to long-term tissue rehabilitation.</p>
+            
+            <h2>1. Short-Term Goals (Acute Phase)</h2>
+            <p>The aim is to manage "angry" tissues and provide immediate comfort.</p>
+            <ul>
+                <li><strong>Deep-Tissue Pain Relief:</strong> Targets deep-seated pain by blocking pain signals from reaching the brain.</li>
+                <li><strong>Edema (Swelling) Management:</strong> Uses a frequency sweep to create a rhythmic "muscle-pump" that drains excess fluid.</li>
+                <li><strong>Breaking the Muscle Spasm Cycle:</strong> Forces hyper-tense muscles to relax by fatiguing motor nerves and boosting blood flow.</li>
+                <li><strong>Local Vasodilation:</strong> Widens blood vessels to increase oxygen delivery for cellular repair.</li>
+            </ul>
+
+            <h2>2. Long-Term Goals (Recovery & Repair)</h2>
+            <p>Shifting toward permanent healing and restoring tissue strength.</p>
+            <ul>
+                <li><strong>Endogenous Opioid Release:</strong> Stimulates the brain to produce natural painkillers like endorphins for long-lasting relief.</li>
+                <li><strong>Accelerated Tissue Healing:</strong> Ensures consistent delivery of repair "building blocks" (like collagen) to damaged areas.</li>
+                <li><strong>Muscle Re-education:</strong> Helps "remind" weak or inhibited muscles how to contract properly.</li>
+                <li><strong>Reduction of Chronic Inflammation:</strong> Flushes out inflammatory by-products in long-term conditions like osteoarthritis.</li>
+                <li><strong>Improved Joint Mobility:</strong> Reducing deep guarding to allow for a full, natural range of motion.</li>
+            </ul>
+
+            <a href="/" class="home-btn">Back to Home Page</a>
+        </div>
+    </body>
+    </html>
+    `);
+});
+
+
+// --- ADD THIS ROUTE FOR NECK PAIN ---
+app.get('/neck-pain', (req, res) => {
+    res.send(`
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Neck Pain - Recovery Goals</title>
+        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+        <style>
+            body { font-family: 'Poppins', sans-serif; line-height: 1.6; color: #1f2937; max-width: 800px; margin: 40px auto; padding: 20px; background: #f3f6f9; }
+            .info-card { background: white; padding: 40px; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+            h1 { color: #0066cc; margin-top: 0; font-size: 2.5rem; border-bottom: 3px solid #0066cc; display: inline-block; margin-bottom: 20px; }
+            h2 { color: #111827; margin-top: 30px; font-size: 1.4rem; border-left: 4px solid #10b981; padding-left: 15px; }
+            ul { padding-left: 20px; }
+            li { margin-bottom: 12px; }
+            .home-btn { display: inline-block; margin-top: 30px; padding: 15px 30px; background: #0066cc; color: white; text-decoration: none; border-radius: 50px; font-weight: 700; transition: 0.3s; }
+            .home-btn:hover { background: #004c99; transform: translateY(-2px); }
+        </style>
+    </head>
+    <body>
+        <div class="info-card">
+            <h1>Neck Pain</h1>
+            <p>Goals are split into the Acute Phase (immediate relief) and the Maintenance/Functional Phase (long-term resilience).</p>
+            
+            <h2>1. Short-Term Goals (Days to Weeks)</h2>
+            <p>In the initial "acute" phase, the primary aim is to calm down irritated tissues.</p>
+            <ul>
+                <li><strong>Pain & Inflammation Management:</strong> Utilizing ice/heat, gentle manual therapy, or TENS to reduce muscle guarding.</li>
+                <li><strong>Restoring Range of Motion (ROM):</strong> Increasing the ability to look over your shoulder and tilt your head without sharp pain.</li>
+                <li><strong>Decompression:</strong> If there is numbness in arms, we work to "centralize" symptoms back to the neck.</li>
+                <li><strong>Postural Awareness:</strong> Identifying ergonomic triggers or "Text Neck" habits at your workstation.</li>
+            </ul>
+
+            <h2>2. Long-Term Goals (Months & Beyond)</h2>
+            <p>Focusing on structural integrity and lifestyle integration.</p>
+            <ul>
+                <li><strong>Deep Neck Flexor Strengthening:</strong> Training the "core of the neck" (like longus colli) to support the cervical curve.</li>
+                <li><strong>Scapular Stability:</strong> Strengthening the upper back and shoulder blade muscles (trapezius and rhomboids).</li>
+                <li><strong>Neuromuscular Coordination:</strong> Improving proprioception, which is often diminished after whiplash.</li>
+                <li><strong>Self-Management:</strong> Providing a "rescue" routine of stretches and chin tucks for daily use.</li>
+            </ul>
+
+            <a href="/" class="home-btn">Back to Home Page</a>
+        </div>
+    </body>
+    </html>
+    `);
+});
+
+// --- ADD THIS ROUTE FOR KNEE PAIN ---
+app.get('/knee-pain', (req, res) => {
+    res.send(`
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Knee Pain - Recovery Goals</title>
+        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+        <style>
+            body { font-family: 'Poppins', sans-serif; line-height: 1.6; color: #1f2937; max-width: 800px; margin: 40px auto; padding: 20px; background: #f3f6f9; }
+            .info-card { background: white; padding: 40px; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+            h1 { color: #0066cc; margin-top: 0; font-size: 2.5rem; border-bottom: 3px solid #0066cc; display: inline-block; margin-bottom: 20px; }
+            h2 { color: #111827; margin-top: 30px; font-size: 1.4rem; border-left: 4px solid #10b981; padding-left: 15px; }
+            ul { padding-left: 20px; }
+            li { margin-bottom: 12px; }
+            .home-btn { display: inline-block; margin-top: 30px; padding: 15px 30px; background: #0066cc; color: white; text-decoration: none; border-radius: 50px; font-weight: 700; transition: 0.3s; }
+            .home-btn:hover { background: #004c99; transform: translateY(-2px); }
+        </style>
+    </head>
+    <body>
+        <div class="info-card">
+            <h1>Knee Pain</h1>
+            <p>Effective knee rehabilitation focuses on immediate relief followed by long-term joint stability.</p>
+            
+            <h2>Primary Treatment Goals</h2>
+            <ul>
+                <li><strong>Reduce Pain and Swelling:</strong> Gentle movements and <strong>PRICE</strong> (Protection, Rest, Ice, Compression, Elevation) can help initially to manage acute symptoms.</li>
+                <li><strong>Improve Range of Motion:</strong> Targeted exercises to restore flexibility and fluid movement within the knee joint.</li>
+                <li><strong>Strengthen Muscles:</strong> Strengthening the supporting muscles around the knee—specifically the <strong>quadriceps, hamstrings, glutes, and calves</strong>—to provide better stability.</li>
+                <li><strong>Improve Balance and Proprioception:</strong> Exercises to enhance your body's awareness of its position in space, which is crucial for preventing future re-injury.</li>
+                <li><strong>Restore Function:</strong> A phased plan for gradually returning to your specific daily activities and sports.</li>
+            </ul>
+
+            <a href="/" class="home-btn">Back to Home Page</a>
+        </div>
+    </body>
+    </html>
+    `);
+});
+
+
 
 app.post('/submit-feedback', (req, res) => {
 
@@ -117,7 +439,6 @@ app.post('/submit-feedback', (req, res) => {
     stmt.finalize();
 
 });
-
 // 4. FRONTEND TEMPLATE
 
 function renderHTML(doctor, feedbacks, stats) {
@@ -167,29 +488,37 @@ function renderHTML(doctor, feedbacks, stats) {
     const callLink = `tel:+91${docPhone}`;
 
     const servicesContent = `
+
 <div class="service-card">
-<h3>Ultrasound</h3>
-<p>Deep heat therapy for pain reduction and rapid healing.</p>
+    <h3><a href="/ultrasound" style="color: var(--primary); text-decoration: underline;">Ultrasound Therapy</a></h3>
+    <p>Deep heat therapy for pain reduction and rapid healing. Click to view treatment goals.</p>
 </div>
+
+
 <div class="service-card">
-<h3>IFT Therapy</h3>
-<p>Interferential currents to relieve inflammation.</p>
+    <h3><a href="/ift" style="color: var(--primary); text-decoration: underline;">IFT Therapy</a></h3>
+    <p>Interferential currents to relieve inflammation. Click to view treatment goals.</p>
 </div>
+
 <div class="service-card">
-<h3>TENS</h3>
-<p>Nerve stimulation to block pain signals effectively.</p>
+    <h3><a href="/tens" style="color: var(--primary); text-decoration: underline;">TENS</a></h3>
+    <p>Nerve stimulation to block pain signals effectively. Click to view treatment goals.</p>
 </div>
+
 <div class="service-card">
-<h3>Back Pain</h3>
-<p>Core strengthening and posture correction exercises.</p>
+    <h3><a href="/back-pain" style="color: var(--primary); text-decoration: underline;">Back Pain</a></h3>
+    <p>Core strengthening and posture correction exercises. Click to view recovery goals.</p>
 </div>
+
+
 <div class="service-card">
-<h3>Neck Pain</h3>
-<p>Manual therapy to improve mobility and reduce stiffness.</p>
+    <h3><a href="/neck-pain" style="color: var(--primary); text-decoration: underline;">Neck Pain</a></h3>
+    <p>Manual therapy to improve mobility and reduce stiffness. Click to view recovery goals.</p>
 </div>
+
 <div class="service-card">
-<h3>Knee Pain</h3>
-<p>Stability training for quads and hamstrings.</p>
+    <h3><a href="/knee-pain" style="color: var(--primary); text-decoration: underline;">Knee Pain</a></h3>
+    <p>Stability training for quads and hamstrings.Click to view recovery goals.</p>
 </div>
 
     `;
@@ -319,6 +648,18 @@ function renderHTML(doctor, feedbacks, stats) {
                 margin-top: 60px; /* Pushes content down to clear the dark header */
 
             }
+
+            /* Add this to your CSS section */
+             .profile-card a {
+              text-decoration: none;
+    display: inline-block;
+}
+
+.profile-img:hover {
+    transform: translateY(-55px) scale(1.05) !important; /* Slight zoom on hover */
+    box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+    cursor: pointer;
+}
 
             /* CARDS */
 
@@ -521,7 +862,9 @@ function renderHTML(doctor, feedbacks, stats) {
 <div class="container">
 <div class="left-column">
 <div class="card profile-card">
-<img src="${docImg}" alt="Dr. ${docName}" class="profile-img" onerror="this.src=''; this.style.backgroundColor='#e0e0e0';">
+<a href="/about-doctor" title="Click to view full profile">
+    <img src="${docImg}" alt="Dr. ${docName}" class="profile-img" style="transition: transform 0.3s ease;">
+</a>
 <h2 class="profile-name">${docName}</h2>
 <div class="profile-qual">${docQual}</div>
 <div class="profile-expertise">Field of expertise: TKR Management</div>
