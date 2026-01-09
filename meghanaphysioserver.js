@@ -343,7 +343,7 @@ app.get('/electro', (req, res) => {
 
             <div class="tech-box" style="background: #eff6ff; border-color: #bfdbfe;">
                 <h3>Why it works</h3>
-                <p>By mimicking the body's natural electrical impulses, electrotherapy can "reset" the nervous system, lower the sensitivity of pain receptors, and stimulate the release of <strong>endorphins</strong>—your body's natural painkillers.</p>
+                <p>By mimicking the body's natural electrical impulses, electrotherapy can "reset" the nervous system, lower the sensitivity of pain receptors, and stimulate the release of <strong>endorphins</strong>â€”your body's natural painkillers.</p>
             </div>
 
             <a href="/" class="home-btn">Back to Home Page</a>
@@ -439,7 +439,7 @@ app.get('/stroke-rehab', (req, res) => {
     <body>
         <div class="info-card">
             <h1>Stroke Rehabilitation</h1>
-            <p>Stroke rehabilitation is a comprehensive program designed to help survivors relearn skills that were lost when part of the brain was damaged. Our focus is on <strong>Neuroplasticity</strong>—the brain's ability to rewire itself through repetitive, purposeful movement.</p>
+            <p>Stroke rehabilitation is a comprehensive program designed to help survivors relearn skills that were lost when part of the brain was damaged. Our focus is on <strong>Neuroplasticity</strong>â€”the brain's ability to rewire itself through repetitive, purposeful movement.</p>
 
             
 
@@ -587,7 +587,7 @@ app.get('/gait-training', (req, res) => {
             </ul>
 
             <div class="tip-box">
-                <strong>Why Gait Matters:</strong> An abnormal walking pattern doesn't just make walking difficult—it can lead to "compensation injuries" in the opposite hip, lower back, or knees. Proper training fixes the root cause before other problems start.
+                <strong>Why Gait Matters:</strong> An abnormal walking pattern doesn't just make walking difficultâ€”it can lead to "compensation injuries" in the opposite hip, lower back, or knees. Proper training fixes the root cause before other problems start.
             </div>
 
             <a href="/" class="home-btn">Back to Home Page</a>
@@ -712,13 +712,13 @@ app.get('/ergonomics', (req, res) => {
                 <h3>The 90-90-90 Rule</h3>
                 <div class="setup-grid">
                     <div>
-                        <strong>1. Elbows:</strong> Bent at 90° and close to your body.
+                        <strong>1. Elbows:</strong> Bent at 90Â° and close to your body.
                     </div>
                     <div>
-                        <strong>2. Hips:</strong> Bent at 90° with a supported lower back.
+                        <strong>2. Hips:</strong> Bent at 90Â° with a supported lower back.
                     </div>
                     <div>
-                        <strong>3. Knees:</strong> Bent at 90° with feet flat on the floor or a footrest.
+                        <strong>3. Knees:</strong> Bent at 90Â° with feet flat on the floor or a footrest.
                     </div>
                     <div>
                         <strong>4. Eyes:</strong> Level with the top third of your monitor screen.
@@ -1001,7 +1001,7 @@ function renderHTML(doctor, feedbacks, stats) {
 
     const docName = doctor ? doctor.name : "Dr. Meghana P";
 
-    const docQual = doctor ? doctor.qualification : "Specialist";
+    const docQual = doctor ? doctor.qualification : "Physiotherapist";
 
     const docImg = (doctor && doctor.image_url) ? doctor.image_url : "/doctor.jpg";
 
