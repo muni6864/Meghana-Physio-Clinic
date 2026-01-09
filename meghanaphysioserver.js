@@ -16,7 +16,7 @@ app.use(express.static('public'));
 // 2. DATABASE SETUP (PostgreSQL)
 const pool = new Pool({
     // Use environment variable 'DATABASE_URL' which you will set in Render
-    connectionString: process.env.DATABASE_URL || "postgresql://meghana_physio_clinic_db_c0kf_user:DhqKz8IXkEfSghSB9ksTgApUx96j0d1v@dpg-d59bgrogjchc73akqga0-a.singapore-postgres.render.com/meghana_physio_clinic_db_c0kf",
+    connectionString: process.env.DATABASE_URL || "postgresql://meghana_physio_care_db_user:rnypxm90BHYAs8T6wHe63WLLduTtOvaJ@dpg-d5gcjkvfte5s73fi2bt0-a/meghana_physio_care_db",
     ssl: {
         rejectUnauthorized: false 
     }
@@ -1793,3 +1793,4 @@ app.listen(PORT, () => {
 });
 
  
+
