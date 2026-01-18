@@ -1545,7 +1545,9 @@ function renderHTML(doctor, feedbacks, stats) {
 
 
 <div class="video-section">
-<h3>Exercise Library</h3>
+
+
+
 </div>
 </div>
 </div>
@@ -1773,5 +1775,6 @@ app.listen(PORT, () => {
 });
 
  
+
 
 
