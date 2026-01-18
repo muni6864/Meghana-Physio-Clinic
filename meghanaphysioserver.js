@@ -1546,26 +1546,6 @@ function renderHTML(doctor, feedbacks, stats) {
 
 <div class="video-section">
 <h3>Exercise Library</h3>
-<button class="video-btn" onclick="openVideo('https://www.youtube.com/embed/ze3H9ZaGFVE')">
-<img src="https://img.youtube.com/vi/ze3H9ZaGFVE/0.jpg" class="vid-thumb">
-<div class="vid-info"><span class="vid-title">General Physiotherapy</span></div>
-<div class="play-indicator">${PLAY_ICON}</div>
-</button>
-<button class="video-btn" onclick="openVideo('https://www.youtube.com/embed/LpRnOEdygFc')">
-<img src="https://img.youtube.com/vi/LpRnOEdygFc/0.jpg" class="vid-thumb">
-<div class="vid-info"><span class="vid-title">Lower Back Pain</span></div>
-<div class="play-indicator">${PLAY_ICON}</div>
-</button>
-<button class="video-btn" onclick="openVideo('https://www.youtube.com/embed/dHk-RqehNc8')">
-<img src="https://img.youtube.com/vi/dHk-RqehNc8/0.jpg" class="vid-thumb">
-<div class="vid-info"><span class="vid-title">Neck Pain Relief</span></div>
-<div class="play-indicator">${PLAY_ICON}</div>
-</button>
-<button class="video-btn" onclick="openVideo('https://www.youtube.com/embed/8euXMuNLRS4')">
-<img src="https://img.youtube.com/vi/8euXMuNLRS4/0.jpg" class="vid-thumb">
-<div class="vid-info"><span class="vid-title">Knee Pain Exercise</span></div>
-<div class="play-indicator">${PLAY_ICON}</div>
-</button>
 </div>
 </div>
 </div>
@@ -1793,4 +1773,5 @@ app.listen(PORT, () => {
 });
 
  
+
 
