@@ -251,7 +251,8 @@ app.post('/api/send-reset', async (req, res) => {
             <div class="details-grid">
                 <div class="detail-item">
                     <h2>Experience</h2>
-                    <p>Worked as a  Physio Trainee at <strong>Sai Sports Academy</strong> since 2024</p>
+                    <p>Worked as a  Physio Trainee at <strong>Sai Sports Academy</strong> </p>
+                    <p>Home Physio Services </p>
                 </div>
 
                 <div class="detail-item">
@@ -1780,6 +1781,7 @@ app.listen(PORT, () => {
 });
 
  
+
 
 
 
