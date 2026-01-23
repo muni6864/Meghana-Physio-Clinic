@@ -277,7 +277,7 @@ app.post('/api/send-reset', async (req, res) => {
 
             <div class="btn-container">
                 <a href="/" class="home-btn">Back to Home</a>
-                <a href="https://wa.me/9148171372" class="book-btn">Book Consultation</a>
+                <a href="https://wa.me/9019996573" class="book-btn">Book Consultation</a>
             </div>
         </div>
     </body>
@@ -1547,7 +1547,7 @@ function renderHTML(doctor, feedbacks, stats) {
 <div class="video-section">
 
 <h3>Physio Library</h3>
-<button class="video-btn" onclick="openVideo('https://youtube.com/shorts/6RduhqjdVEA?si=zLdGHMRc6I7BStjS')">
+<button class="video-btn" onclick="openVideo('https://youtube.com/shorts/6RduhqjdVEA?si=eaNk-WezWedEkmRe')">
 <div class="vid-info"><span class="vid-title">Lower Back Pain </span></div>
 <div class="play-indicator">${PLAY_ICON}</div>
 </button>
@@ -1780,6 +1780,7 @@ app.listen(PORT, () => {
 });
 
  
+
 
 
 
