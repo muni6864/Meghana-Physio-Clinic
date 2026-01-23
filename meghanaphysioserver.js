@@ -1526,7 +1526,7 @@ function renderHTML(doctor, feedbacks, stats) {
 <body>
 <div class="header-section">
 <h1 class="main-title">Meghana Physio Care & Home Services</h1>
-<div class="sub-title">Advanced Physiotherapy & Rehabilitation Center</div>
+<div class="sub-title">Advanced Physiotherapy</div>
 </div>
 <div class="container">
 <div class="left-column">
@@ -1547,9 +1547,9 @@ function renderHTML(doctor, feedbacks, stats) {
 <div class="video-section">
 
 <h3>Physio Library</h3>
-<button class="video-btn" onclick="openVideo('https://youtube.com/shorts/6RduhqjdVEA?si=eaNk-WezWedEkmRe')">
-<div class="vid-info"><span class="vid-title">Lower Back Pain </span></div>
-<div class="play-indicator">${PLAY_ICON}</div>
+<button class="video-btn" onclick="openVideo('https://www.youtube.com/embed/6RduhqjdVEA')">
+  <div class="vid-info"><span class="vid-title">Lower Back Pain</span></div>
+  <div class="play-indicator">${PLAY_ICON}</div>
 </button>
 </div>
 
@@ -1780,6 +1780,7 @@ app.listen(PORT, () => {
 });
 
  
+
 
 
 
