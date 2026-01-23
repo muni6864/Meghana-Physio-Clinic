@@ -1546,10 +1546,10 @@ function renderHTML(doctor, feedbacks, stats) {
 
 <div class="video-section">
 
-<h3>Exercise Library</h3>
-<button class="video-btn" onclick="openVideo('https://www.youtube.com/embed/ze3H9ZaGFVE')">
+<h3>Physio Library</h3>
+<button class="video-btn" onclick="openVideo('https://youtube.com/shorts/6RduhqjdVEA?si=zLdGHMRc6I7BStjS')">
 <img src="https://youtube.com/shorts/6RduhqjdVEA?si=zLdGHMRc6I7BStjS" class="vid-thumb">
-<div class="vid-info"><span class="vid-title">General Physiotherapy</span></div>
+<div class="vid-info"><span class="vid-title">Lower Back PAIN</span></div>
 <div class="play-indicator">${PLAY_ICON}</div>
 </button>
 </div>
@@ -1781,6 +1781,7 @@ app.listen(PORT, () => {
 });
 
  
+
 
 
 
