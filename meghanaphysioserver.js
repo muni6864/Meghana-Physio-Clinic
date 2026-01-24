@@ -1538,7 +1538,7 @@ function renderHTML(doctor, feedbacks, stats) {
 <h2 class="profile-name">${docName}</h2>
 <div class="profile-qual">${docQual}</div>
 <div class="rating-badge">${avgDisplay}</div>
-<div class="contact-row"><span>${PHONE_ICON} +91 ${docPhone}</span></div>
+<div <a href="https://wa.me/9019996573" class="book-btn">Book your Consultation</a>></div>
 <div class="btn-group">
 <a href="${callLink}" class="btn call">Call Now</a>
 <a href="${whatsAppLink}" target="_blank" class="btn msg">WhatsApp</a>
@@ -1781,6 +1781,7 @@ app.listen(PORT, () => {
 });
 
  
+
 
 
 
