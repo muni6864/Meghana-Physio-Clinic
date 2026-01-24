@@ -1542,7 +1542,7 @@ function renderHTML(doctor, feedbacks, stats) {
 <div class="rating-badge">${avgDisplay}</div>
 <div class="btn-group">
 <a href="${callLink}" class="btn call">Call Now</a>
-<a href="https://wa.me/9019996573?text=Hello%20Dr.%20Meghana%20P%2C%20I%20need%20an%20appointment%20for%20my%20physio%20care." class="book-btn">
+<a href="https://wa.me/9019996573?text=Hello%20Dr.%20Meghana%20P%2C%20I%20need%20an%20appointment%20for%20my%20physio%20care." class="btn msg">
   Book your Consultation
 </a>
 </div>
@@ -1784,6 +1784,7 @@ app.listen(PORT, () => {
 });
 
  
+
 
 
 
