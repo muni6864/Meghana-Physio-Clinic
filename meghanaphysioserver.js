@@ -278,7 +278,9 @@ app.post('/api/send-reset', async (req, res) => {
 
             <div class="btn-container">
                 <a href="/" class="home-btn">Back to Home</a>
-                <a href="https://wa.me/9019996573" class="book-btn">Book Consultation</a>
+                <a href="https://wa.me/9019996573?text=Hello%20Dr.%20Meghana%20P%2C%20I%20need%20an%20appointment%20for%20my%20physio%20care." class="book-btn">
+  Book your Consultation
+</a>
             </div>
         </div>
     </body>
@@ -1538,10 +1540,11 @@ function renderHTML(doctor, feedbacks, stats) {
 <h2 class="profile-name">${docName}</h2>
 <div class="profile-qual">${docQual}</div>
 <div class="rating-badge">${avgDisplay}</div>
-<div <a href="https://wa.me/9019996573" class="book-btn">Book your Consultation</a>></div>
 <div class="btn-group">
 <a href="${callLink}" class="btn call">Call Now</a>
-<a href="${whatsAppLink}" target="_blank" class="btn msg">WhatsApp</a>
+<a href="https://wa.me/9019996573?text=Hello%20Dr.%20Meghana%20P%2C%20I%20need%20an%20appointment%20for%20my%20physio%20care." class="book-btn">
+  Book your Consultation
+</a>
 </div>
 
 
@@ -1781,6 +1784,7 @@ app.listen(PORT, () => {
 });
 
  
+
 
 
 
