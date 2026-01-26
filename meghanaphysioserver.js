@@ -1557,7 +1557,7 @@ function renderHTML(doctor, feedbacks, stats) {
 </button>
 
 <button class="video-btn" onclick="openVideo('https://www.youtube.com/embed/v5SlZz3E8tc')">
-  <div class="vid-info"><span class="vid-title">Hip Pain</span></div>
+  <div class="vid-info"><span class="vid-title">Hip Joint Stiffness</span></div>
   <div class="play-indicator">${PLAY_ICON}</div>
 </button>
 </div>
@@ -1789,6 +1789,7 @@ app.listen(PORT, () => {
 });
 
  
+
 
 
 
