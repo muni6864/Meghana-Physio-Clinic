@@ -6,7 +6,7 @@ const twilio = require('twilio'); // Added Twilio library
 const accountSid = 'ACa183ff9de23b823c0bcafd5f56627d52';
 const authToken = 'f8fb5d70ce324890c911f6579784e0fc';
 const twilioPhone = '+15707019564';
-const adminPhone = '+919148171372';
+const adminPhone = '+919019996573';
 const client = new twilio(accountSid, authToken);
 
 async function sendTwilioSMS(patientName, patientId, patientMobile) {
@@ -190,4 +190,5 @@ module.exports = (pool) => {
     });
 
     return router; 
+
 };
