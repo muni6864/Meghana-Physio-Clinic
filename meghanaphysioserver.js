@@ -16,7 +16,7 @@ app.use(express.static('public'));
 // 2. DATABASE SETUP (PostgreSQL)
 const pool = new Pool({
     // Use environment variable 'DATABASE_URL' which you will set in Render
-    connectionString: process.env.DATABASE_URL || "postgresql://meghana_physio_care_db_user:rnypxm90BHYAs8T6wHe63WLLduTtOvaJ@dpg-d5gcjkvfte5s73fi2bt0-a/meghana_physio_care_db",
+    connectionString: process.env.DATABASE_URL || "postgresql://meghana_physio_care_db_jy71_user:oxArZPlKQ94sPnT7kF75DtHpZQ0bdErV@dpg-d5s8v4nfte5s73cnhuqg-a/meghana_physio_care_db_jy71",
     ssl: {
         rejectUnauthorized: false 
     }
@@ -204,6 +204,61 @@ app.post('/api/send-reset', async (req, res) => {
     // For now, let's simulate it:
     res.send("<script>alert('A reset link has been sent to your registered email!'); window.location.href='/admin-login';</script>");
 });
+
+
+
+
+
+// GET Sessions for a specific patient
+app.get('/admin/api/sessions/:patientId', async (req, res) => {
+    try {
+        const { patientId } = req.params;
+        // Postgres query using $1 parameter
+        const result = await pool.query(
+            `SELECT * FROM sessions WHERE patient_id = $1 ORDER BY session_number ASC`,
+            [patientId]
+        );
+        res.json(result.rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Server error fetching sessions" });
+    }
+});
+
+// SAVE Sessions (Transaction: Delete All Old -> Insert New)
+app.post('/admin/api/save-sessions', async (req, res) => {
+    const client = await pool.connect(); // Get a client for transaction
+    try {
+        await client.query('BEGIN'); // Start Transaction
+        
+        const { patient_id, sessions } = req.body;
+
+        // 1. Remove existing sessions for this patient (to avoid duplicates)
+        await client.query('DELETE FROM sessions WHERE patient_id = $1', [patient_id]);
+
+        // 2. Insert the new/updated list
+        if (sessions.length > 0) {
+            for (const session of sessions) {
+                await client.query(
+                    `INSERT INTO sessions (patient_id, session_number, session_date, session_details) 
+                     VALUES ($1, $2, $3, $4)`,
+                    [patient_id, session.session_number, session.session_date, session.session_details]
+                );
+            }
+        }
+
+        await client.query('COMMIT'); // Commit changes
+        res.json({ success: true, message: "Sessions updated successfully" });
+
+    } catch (err) {
+        await client.query('ROLLBACK'); // Undo if error
+        console.error("Error saving sessions:", err);
+        res.status(500).json({ error: err.message });
+    } finally {
+        client.release(); // Release client back to pool
+    }
+});
+
 
 
 
@@ -1789,7 +1844,6 @@ app.listen(PORT, () => {
 });
 
  
-
 
 
 
