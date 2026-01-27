@@ -165,8 +165,8 @@ module.exports = (pool) => {
             await sendTwilioSMS(name, finalId, mobile);
 
             // Prepare WhatsApp links (Keeping your existing WhatsApp logic)
-            const adminMsg = `NEW REGISTRATION ALERT:%0AName: ${name}%0AID: ${finalId}%0AMobile: ${mobile}`;
-            const adminWaLink = `https://wa.me/9148171372?text=${adminMsg}`;
+            const adminMsg = `NEW REGISTRATION ALERT:%0AName: ${name}%0APatient ID: ${finalId}%0AMobile: ${mobile}`;
+            const adminWaLink = `https://wa.me/9019996573?text=${adminMsg}`;
 
             res.send(`
                 <script>
@@ -192,3 +192,4 @@ module.exports = (pool) => {
     return router; 
 
 };
+
